@@ -1,20 +1,30 @@
-# Конфигурация пула раннеров для кластера m1core.space
+# Стабильная конфигурация пула раннеров для m1core.space
 githubConfigUrl: "https://github.com/iamgeorgezelenkov/m1core-llm-dags"
-
-# Ссылка на секрет, который мы создадим в кубере вручную (туда положим наш PAT-токен)
 githubConfigSecret: "m1core-runner-gh-token"
-
-# Настройки масштабирования и подов
-minRunners: 1
-maxRunners: 3
 
 runnerScaleSetName: "m1core-k8s-runner"
 
+minRunners: 1
+maxRunners: 3
+
 template:
   spec:
+    # Привязываем к тяжелой ноде
     nodeSelector:
-      type: heavy # Твоя нода для тяжелых задач и LLM
+      type: heavy
+
+    # Сервисный аккаунт для будущих деплоев
+    serviceAccountName: m1core-runner-sa
+
     containers:
       - name: runner
-        image: ghcr.io/actions/actions-runner:latest
+        # Фиксируем точную проверенную версию образа
+        image: ghcr.io/actions/actions-runner:2.335.0
         command: ["/home/runner/run.sh"]
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "1"
+            memory: "2Gi"
