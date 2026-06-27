@@ -1,0 +1,36 @@
+name: Build LLM Portal with Buildah
+
+on:
+  push:
+    paths:
+      - 'apps/m1core-llm-portal/**'
+
+jobs:
+  build-and-push:
+    runs-on: m1core-k8s-runner
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | buildah login -u ${{ github.actor }} --password-stdin ghcr.io
+
+      - name: Build Image with Buildah
+        run: |
+          buildah bud \
+            --format docker \
+            --storage-driver vfs \
+            -t ghcr.io/${{ github.repository_owner }}/m1core-llm-portal:${{ github.sha }} \
+            -f apps/m1core-llm-portal/Dockerfile \
+            apps/m1core-llm-portal
+
+      - name: Push Image to GHCR
+        run: |
+          buildah push \
+            --storage-driver vfs \
+            ghcr.io/${{ github.repository_owner }}/m1core-llm-portal:${{ github.sha }}
