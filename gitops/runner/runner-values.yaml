@@ -1,30 +1,21 @@
-# Стабильная конфигурация пула раннеров для m1core.space
 githubConfigUrl: "https://github.com/iamgeorgezelenkov/m1core-llm-dags"
 githubConfigSecret: "m1core-runner-gh-token"
 
 runnerScaleSetName: "m1core-k8s-runner"
 
-minRunners: 1
+minRunners: 0
 maxRunners: 3
+
+# Включаем режим Kubernetes (он создаст под-раннер с хуками автоматизации)
+containerMode:
+  type: "kubernetes"
 
 template:
   spec:
-    # Привязываем к тяжелой ноде
     nodeSelector:
       type: heavy
-
-    # Сервисный аккаунт для будущих деплоев
     serviceAccountName: m1core-runner-sa
-
     containers:
       - name: runner
-        # Фиксируем точную проверенную версию образа
-        image: ghcr.io/actions/actions-runner:2.335.0
+        image: ghcr.io/actions/actions-runner:2.321.0
         command: ["/home/runner/run.sh"]
-        resources:
-          requests:
-            cpu: "500m"
-            memory: "1Gi"
-          limits:
-            cpu: "1"
-            memory: "2Gi"
