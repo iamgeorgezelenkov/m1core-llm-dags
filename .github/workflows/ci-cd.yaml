@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'apps/m1core-llm-portal/**'
+  workflow_dispatch:
 
 jobs:
   build-and-push:
