@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: m1core-llm-portal
+  namespace: m1core-apps
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: m1core-llm-portal
+  template:
+    metadata:
+      labels:
+        app: m1core-llm-portal
+    spec:
+      containers:
+        - name: portal
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 8000
+          env:
+            - name: AIRFLOW_URL
+              value: "{{ .Values.config.airflowUrl }}"
+            - name: AIRFLOW_USER
+              value: "{{ .Values.config.airflowUser }}"
+            - name: AIRFLOW_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: m1core-airflow-credentials
+                  key: password
+          resources:
+            {{- toYaml .Values.resources | nindent 14 }}
