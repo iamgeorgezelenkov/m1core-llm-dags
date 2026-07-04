@@ -1,11 +1,11 @@
 githubConfigUrl: "https://github.com/iamgeorgezelenkov/m1core-llm-dags"
 githubConfigSecret: "m1core-runner-gh-token"
 runnerScaleSetName: "m1core-k8s-runner"
+runnerNamespace: "actions-runner"
 
 minRunners: 0
 maxRunners: 3
 
-# Включаем режим Kubernetes правильно, добавив описание волюма
 containerMode:
   type: "kubernetes"
   kubernetesModeWorkVolumeClaim:
@@ -23,3 +23,5 @@ template:
       - name: runner
         image: ghcr.io/actions/actions-runner:latest
         command: ["/home/runner/run.sh"]
+        securityContext:
+          privileged: true
