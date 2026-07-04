@@ -13,19 +13,18 @@ jobs:
       contents: read
       packages: write
 
-    # 1. Выполняем требование раннера: задаем контейнер для всей джобы.
-    # Используем rootless-образ buildah, который умеет работать без root-прав хоста.
+    # 1. Задаем контейнер для всей джобы.
     container:
       image: quay.io/buildah/stable:latest
-      # Вместо --privileged используем безопасный для K8s сброс ограничений (chown/fowner)
-      options: --user 1000 --device /dev/fuse
+      # ПРАВИМ ТУТ: Запускаем от root (--user 0:0) и прокидываем privileged, 
+      # чтобы Buildah нативно использовал подсистему ядра хоста для монтирования слоев.
+      options: --user 0:0 --privileged --device /dev/fuse
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Логинимся в гитхаб реджистри
-      # Экшен podman-login внутри контейнера подменит конфигурацию для buildah автоматически
+      # 2. Логинимся в GHCR
       - name: Log in to GHCR
         uses: redhat-actions/podman-login@v1
         with:
@@ -33,7 +32,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. Собираем образ с помощью экшена из статьи (buildah-build@v2)
+      # 3. Собираем образ через buildah-build@v2
       - name: Buildah Action
         id: build-image
         uses: redhat-actions/buildah-build@v2
@@ -43,8 +42,9 @@ jobs:
           containerfiles: |
             apps/m1core-llm-portal/Dockerfile
           context: apps/m1core-llm-portal
-          # Критично для работы внутри K8s без root:
-          extra-args: --storage-driver=vfs
+          # ПРАВИМ ТУТ: убираем vfs (он адски медленный). 
+          # Раз теперь есть --privileged, Buildah сможет использовать нативный и быстрый overlayfs.
+          extra-args: --storage-driver=overlay
 
       # 4. Пушим готовый результат
       - name: Push Image to GHCR
