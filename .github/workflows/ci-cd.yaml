@@ -13,10 +13,19 @@ jobs:
       contents: read
       packages: write
 
+    # 1. Выполняем требование раннера: задаем контейнер для всей джобы.
+    # Используем rootless-образ buildah, который умеет работать без root-прав хоста.
+    container:
+      image: quay.io/buildah/stable:latest
+      # Вместо --privileged используем безопасный для K8s сброс ограничений (chown/fowner)
+      options: --user 1000 --device /dev/fuse
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2. Логинимся в гитхаб реджистри
+      # Экшен podman-login внутри контейнера подменит конфигурацию для buildah автоматически
       - name: Log in to GHCR
         uses: redhat-actions/podman-login@v1
         with:
@@ -24,17 +33,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Image
+      # 3. Собираем образ с помощью экшена из статьи (buildah-build@v2)
+      - name: Buildah Action
         id: build-image
-        uses: redhat-actions/buildimage-action@v1
+        uses: redhat-actions/buildah-build@v2
         with:
           image: m1core-llm-portal
           tags: ${{ github.sha }}
           containerfiles: |
             apps/m1core-llm-portal/Dockerfile
           context: apps/m1core-llm-portal
-          storage-driver: vfs
+          # Критично для работы внутри K8s без root:
+          extra-args: --storage-driver=vfs
 
+      # 4. Пушим готовый результат
       - name: Push Image to GHCR
         uses: redhat-actions/push-to-registry@v1
         with:
