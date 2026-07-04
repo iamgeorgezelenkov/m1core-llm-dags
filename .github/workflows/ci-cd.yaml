@@ -13,6 +13,11 @@ jobs:
       contents: read
       packages: write
 
+    # Ключевое исправление: запускаем всю джобу внутри контейнера с Buildah
+    container:
+      image: quay.io/buildah/stable:v1.35
+      options: --user 0 # Переключаемся на root внутри контейнера, чтобы buildah мог свободно работать с файлами сборки
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
