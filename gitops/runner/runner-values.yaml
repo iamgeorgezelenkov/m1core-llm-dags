@@ -1,7 +1,7 @@
-githubConfigUrl: "https://github.com/iamgeorgezelenkov/m1core-llm-dags"
+githubConfigUrl: "https://github.com"
 githubConfigSecret: "m1core-runner-gh-token"
 runnerScaleSetName: "m1core-k8s-runner"
-runnerNamespace: "actions-runner"
+runnerNamespace: "actions-runner" 
 
 minRunners: 0
 maxRunners: 3
@@ -13,6 +13,17 @@ containerMode:
     resources:
       requests:
         storage: 1Gi
+  # ПРАВИЛЬНЫЙ И БЕЗОПАСНЫЙ ПРОБРОС FUSE ДЛЯ BUILDAH:
+  # Это автоматически добавит устройство /dev/fuse во все контейнеры задач воркфлоу
+  kubernetesModeVolumeMounts:
+    - name: dev-fuse
+      mountPath: /dev/fuse
+      readOnly: false
+  # Описание самого ресурса fuse на хосте
+  kubernetesModeVolumes:
+    - name: dev-fuse
+      hostPath:
+        path: /dev/fuse
 
 template:
   spec:
@@ -23,5 +34,8 @@ template:
       - name: runner
         image: ghcr.io/actions/actions-runner:latest
         command: ["/home/runner/run.sh"]
-        securityContext:
-          privileged: true
+        env:
+          # Убираем ошибку "Jobs without a job container..."
+          - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
+            value: "false"
+        # SECURITY-ИСПРАВЛЕНИЕ: Блок securityContext: privileged: true УДАЛЕН.
