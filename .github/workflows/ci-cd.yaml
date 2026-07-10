@@ -24,23 +24,17 @@ jobs:
           echo "${{ secrets.GITHUB_TOKEN }}" | buildah login -u "${{ github.actor }}" --password-stdin ghcr.io
 
       - name: Build Image with Buildah
-        id: build-image
-        uses: redhat-actions/buildah-build@v2
-        with:
-          image: m1core-llm-portal
-          tags: ${{ github.sha }}
-          containerfiles: |
-            apps/m1core-llm-portal/Dockerfile
-          context: apps/m1core-llm-portal
-          extra-args: |
-            --storage-driver=vfs
-            --isolation=chroot
+        run: |
+          buildah bud \
+            --storage-driver=vfs \
+            --isolation=chroot \
+            -f apps/m1core-llm-portal/Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/m1core-llm-portal:${{ github.sha }} \
+            apps/m1core-llm-portal
 
       - name: Push Image to GHCR
-        uses: redhat-actions/push-to-registry@v1
-        with:
-          image: localhost/${{ steps.build-image.outputs.image }}
-          tag: ${{ steps.build-image.outputs.tags }}
-          registry: ghcr.io/${{ github.repository_owner }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          buildah push \
+            --storage-driver=vfs \
+            ghcr.io/${{ github.repository_owner }}/m1core-llm-portal:${{ github.sha }} \
+            docker://ghcr.io/${{ github.repository_owner }}/m1core-llm-portal:${{ github.sha }}
