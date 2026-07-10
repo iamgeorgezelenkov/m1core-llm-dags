@@ -13,17 +13,20 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Install buildah
         run: |
           sudo apt-get update
           sudo apt-get install -y buildah
-      - name: Log in to GHCR
+
+      - name: Log in to GitHub Container Registry
         uses: redhat-actions/podman-login@v1
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Buildah Action
+
+      - name: Build Image with Buildah
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
@@ -33,6 +36,7 @@ jobs:
             apps/m1core-llm-portal/Dockerfile
           context: apps/m1core-llm-portal
           extra-args: --storage-driver=vfs
+
       - name: Push Image to GHCR
         uses: redhat-actions/push-to-registry@v1
         with:
