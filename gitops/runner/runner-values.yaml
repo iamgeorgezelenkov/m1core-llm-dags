@@ -17,3 +17,7 @@ template:
         env:
           - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
             value: "false"
+        securityContext:
+          capabilities:
+            add:
+              - SYS_ADMIN
