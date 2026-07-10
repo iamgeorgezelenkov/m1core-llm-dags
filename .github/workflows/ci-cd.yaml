@@ -4,7 +4,6 @@ on:
     paths:
       - 'apps/m1core-llm-portal/**'
   workflow_dispatch:
-
 jobs:
   build-and-push:
     runs-on: m1core-k8s-runner
@@ -15,19 +14,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Оставляем установку, раз вы используете чистый образ раннера
       - name: Install buildah
         run: |
           sudo apt-get update
           sudo apt-get install -y buildah
 
-      # Этот шаг можно оставить (для надежности локального buildah), 
-      # но для экшена push-to-registry авторизацию нужно передать отдельно ниже
       - name: Log in to GitHub Container Registry
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | buildah login -u "${{ github.actor }}" --password-stdin ghcr.io
 
-      # Сборка образа
       - name: Build Image with Buildah
         id: build-image
         uses: redhat-actions/buildah-build@v2
@@ -41,12 +36,9 @@ jobs:
             --storage-driver=vfs
             --isolation=chroot
 
-      # Пуш образа (Исправленный шаг)
       - name: Push Image to GHCR
         uses: redhat-actions/push-to-registry@v1
         with:
           image: ${{ steps.build-image.outputs.image }}
-          tags: ${{ steps.build-image.outputs.tags }}
+          tag: ${{ steps.build-image.outputs.tags }}
           registry: ghcr.io/${{ github.repository_owner }}
-          username: ${{ github.actor }}               # <--- Добавлено
-          password: ${{ secrets.GITHUB_TOKEN }}       # <--- Добавлено
