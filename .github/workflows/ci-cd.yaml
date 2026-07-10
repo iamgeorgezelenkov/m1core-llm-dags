@@ -1,5 +1,4 @@
 name: Build LLM Portal with Buildah
-
 on:
   push:
     paths:
@@ -12,13 +11,14 @@ jobs:
     permissions:
       contents: read
       packages: write
-
-    # БЛОК container: УДАЛЕН. 
-    # Раннер сам знает, что делать, благодаря ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER="false"
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install buildah
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y buildah
 
       - name: Log in to GHCR
         uses: redhat-actions/podman-login@v1
@@ -36,8 +36,6 @@ jobs:
           containerfiles: |
             apps/m1core-llm-portal/Dockerfile
           context: apps/m1core-llm-portal
-          # Использование overlay теперь легально и безопасно, 
-          # так как /dev/fuse проброшен через kubernetesModeVolumeMounts в Helm
           extra-args: --storage-driver=overlay
 
       - name: Push Image to GHCR
