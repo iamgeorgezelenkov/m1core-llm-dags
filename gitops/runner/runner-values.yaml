@@ -6,6 +6,9 @@ minRunners: 0
 maxRunners: 3
 
 template:
+  metadata:
+    annotations:
+      container.apparmor.security.beta.kubernetes.io/runner: unconfined
   spec:
     nodeSelector:
       type: heavy
@@ -21,3 +24,5 @@ template:
           capabilities:
             add:
               - SYS_ADMIN
+          seccompProfile:
+            type: Unconfined
