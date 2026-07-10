@@ -32,7 +32,9 @@ jobs:
           containerfiles: |
             apps/m1core-llm-portal/Dockerfile
           context: apps/m1core-llm-portal
-          extra-args: --storage-driver=vfs
+          extra-args: |
+            --storage-driver=vfs
+            --isolation=chroot
 
       - name: Push Image to GHCR
         uses: redhat-actions/push-to-registry@v1
