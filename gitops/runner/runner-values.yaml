@@ -1,4 +1,4 @@
-githubConfigUrl: "https://github.com"
+githubConfigUrl: "https://github.com/iamgeorgezelenkov/m1core-llm-dags"
 githubConfigSecret: "m1core-runner-gh-token"
 runnerScaleSetName: "m1core-k8s-runner"
 runnerNamespace: "actions-runner"
