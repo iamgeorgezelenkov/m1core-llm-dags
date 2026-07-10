@@ -17,12 +17,3 @@ template:
         env:
           - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
             value: "false"
-        securityContext:
-          privileged: false
-        volumeMounts:
-          - name: dev-fuse
-            mountPath: /dev/fuse
-    volumes:
-      - name: dev-fuse
-        hostPath:
-          path: /dev/fuse
