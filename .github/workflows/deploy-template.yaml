@@ -1,0 +1,37 @@
+name: Reusable Helm Deploy
+
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        required: true
+        type: string
+      chart_path:
+        required: true
+        type: string
+      namespace:
+        required: true
+        type: string
+      image_repository:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: m1core-k8s-runner
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Helm upgrade --install
+        run: |
+          helm upgrade --install ${{ inputs.app_name }} ${{ inputs.chart_path }} \
+            --namespace ${{ inputs.namespace }} \
+            --set image.repository=${{ inputs.image_repository }} \
+            --set image.tag=${{ inputs.image_tag }} \
+            --wait --timeout 5m
