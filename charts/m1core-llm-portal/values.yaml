@@ -1,14 +1,24 @@
 replicaCount: 1
+
 image:
   repository: ghcr.io/iamgeorgezelenkov/m1core-llm-portal
   tag: latest
-config:
-  airflowUrl: "http://airflow-webserver.airflow.svc.cluster.local:8080"
-  airflowUser: "admin"
+  pullPolicy: IfNotPresent
+
+containerPort: 8000
+
+service:
+  type: ClusterIP
+  port: 8000
+
 resources:
   requests:
-    cpu: "100m"
-    memory: "128Mi"
+    cpu: 100m
+    memory: 128Mi
   limits:
-    cpu: "300m"
-    memory: "256Mi"
+    cpu: 500m
+    memory: 512Mi
+
+env:
+  AIRFLOW_URL: "http://airflow-webserver.airflow.svc.cluster.local:8080"
+  AIRFLOW_DAG_ID: "hf_model_downloader"
