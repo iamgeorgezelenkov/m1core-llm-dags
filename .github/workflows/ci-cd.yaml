@@ -1,9 +1,18 @@
-name: Build LLM Portal with Buildah
+name: Reusable Buildah Build
+
 on:
-  push:
-    paths:
-      - 'apps/m1core-llm-portal/**'
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      app_name:
+        required: true
+        type: string
+      context_dir:
+        required: true
+        type: string
+      dockerfile_path:
+        required: true
+        type: string
+
 jobs:
   build-and-push:
     runs-on: m1core-k8s-runner
@@ -28,13 +37,13 @@ jobs:
           buildah bud \
             --storage-driver=vfs \
             --isolation=chroot \
-            -f apps/m1core-llm-portal/Dockerfile \
-            -t ghcr.io/${{ github.repository_owner }}/m1core-llm-portal:${{ github.sha }} \
-            apps/m1core-llm-portal
+            -f ${{ inputs.dockerfile_path }} \
+            -t ghcr.io/${{ github.repository_owner }}/${{ inputs.app_name }}:${{ github.sha }} \
+            ${{ inputs.context_dir }}
 
       - name: Push Image to GHCR
         run: |
           buildah push \
             --storage-driver=vfs \
-            ghcr.io/${{ github.repository_owner }}/m1core-llm-portal:${{ github.sha }} \
-            docker://ghcr.io/${{ github.repository_owner }}/m1core-llm-portal:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/${{ inputs.app_name }}:${{ github.sha }} \
+            docker://ghcr.io/${{ github.repository_owner }}/${{ inputs.app_name }}:${{ github.sha }}
