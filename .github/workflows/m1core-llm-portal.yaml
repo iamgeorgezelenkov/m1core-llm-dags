@@ -1,9 +1,9 @@
-name: CI - M1 Core LLM Portal
+name: M1 Core LLM Portal
 
 on:
   push:
     paths:
-      - 'apps/m1core-llm-portal/**' # Реагирует только на код этого приложения
+      - 'apps/m1core-llm-portal/**'
   workflow_dispatch:
 
 jobs:
@@ -17,3 +17,15 @@ jobs:
       context_dir: 'apps/m1core-llm-portal'
       dockerfile_path: 'apps/m1core-llm-portal/Dockerfile'
     secrets: inherit
+
+  run-deploy:
+    needs: run-build
+    permissions:
+      contents: read
+    uses: ./.github/workflows/deploy-template.yaml
+    with:
+      app_name: 'm1core-llm-portal'
+      chart_path: 'charts/m1core-llm-portal'
+      namespace: 'm1core-llm-portal'
+      image_repository: 'ghcr.io/iamgeorgezelenkov/m1core-llm-portal'
+      image_tag: ${{ github.sha }}
