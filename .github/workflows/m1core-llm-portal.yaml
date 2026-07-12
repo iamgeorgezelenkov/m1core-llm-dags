@@ -8,6 +8,9 @@ on:
 
 jobs:
   run-build:
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-template.yaml
     with:
       app_name: 'm1core-llm-portal'
