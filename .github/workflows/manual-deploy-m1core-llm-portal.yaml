@@ -1,0 +1,21 @@
+name: Manual Deploy - M1 Core LLM Portal
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Тег образа для деплоя (например, SHA коммита из уже собранного образа)'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/deploy-template.yaml
+    with:
+      app_name: 'm1core-llm-portal'
+      chart_path: 'charts/m1core-llm-portal'
+      namespace: 'm1core-llm-portal'
+      image_repository: 'ghcr.io/iamgeorgezelenkov/m1core-llm-portal'
+      image_tag: ${{ inputs.image_tag }}
