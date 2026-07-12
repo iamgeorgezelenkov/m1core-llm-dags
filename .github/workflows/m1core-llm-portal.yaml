@@ -1,0 +1,16 @@
+name: CI - M1 Core LLM Portal
+
+on:
+  push:
+    paths:
+      - 'apps/m1core-llm-portal/**' # Реагирует только на код этого приложения
+  workflow_dispatch:
+
+jobs:
+  run-build:
+    uses: ./.github/workflows/build-template.yaml
+    with:
+      app_name: 'm1core-llm-portal'
+      context_dir: 'apps/m1core-llm-portal'
+      dockerfile_path: 'apps/m1core-llm-portal/Dockerfile'
+    secrets: inherit
