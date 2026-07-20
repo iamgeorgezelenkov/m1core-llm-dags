@@ -20,5 +20,5 @@ resources:
     memory: 512Mi
 
 env:
-  AIRFLOW_URL: "http://airflow-webserver.airflow.svc.cluster.local:8080"
+  AIRFLOW_URL: "http://airflow-api-server.airflow.svc.cluster.local:8080"
   AIRFLOW_DAG_ID: "hf_model_downloader"
