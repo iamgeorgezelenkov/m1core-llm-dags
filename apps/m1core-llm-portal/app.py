@@ -15,9 +15,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-AIRFLOW_URL = os.getenv("AIRFLOW_URL", "http://airflow-webserver.airflow.svc.cluster.local:8080")
+AIRFLOW_URL = os.getenv("AIRFLOW_URL", "http://airflow-api-server.airflow.svc.cluster.local:8080")
 AIRFLOW_DAG_ID = os.getenv("AIRFLOW_DAG_ID", "hf_model_downloader")
-AIRFLOW_AUTH = (os.getenv("AIRFLOW_USER", "admin"), os.getenv("AIRFLOW_PASSWORD", "admin"))
+AIRFLOW_USER = os.getenv("AIRFLOW_USER", "admin")
+AIRFLOW_PASSWORD = os.getenv("AIRFLOW_PASSWORD", "admin")
 
 
 class ModelDeployRequest(BaseModel):
@@ -48,8 +49,8 @@ def index():
     </head>
     <body>
         <h2>M1 Core LLM Portal</h2>
-        <p>Вставьте ссылку на модель HuggingFace, чтобы запустить загрузку.</p>
-        <input type="text" id="hfUrl" placeholder="https://huggingface.co/organization/model-name">
+        <p>Вставьте HuggingFace-путь модели (например huihui_ai/qwen3-abliterated) или Ollama-тег вида org/model:tag.</p>
+        <input type="text" id="hfUrl" placeholder="huihui_ai/qwen3-abliterated:1.7b">
         <button onclick="deploy()">Загрузить модель</button>
         <div id="result"></div>
 
@@ -86,21 +87,42 @@ def index():
     """
 
 
+def get_airflow_token() -> str:
+    resp = requests.post(
+        f"{AIRFLOW_URL}/auth/token",
+        json={"username": AIRFLOW_USER, "password": AIRFLOW_PASSWORD},
+        timeout=10,
+    )
+    resp.raise_for_status()
+    return resp.json()["access_token"]
+
+
 @app.post("/api/v1/deploy")
 def deploy_model(payload: ModelDeployRequest):
-    hf_repo = payload.hf_url.replace("https://huggingface.co/", "")
-    trigger_url = f"{AIRFLOW_URL}/api/v1/dags/{AIRFLOW_DAG_ID}/dagRuns"
+    hf_repo = payload.hf_url.replace("https://huggingface.co/", "").strip("/")
+    trigger_url = f"{AIRFLOW_URL}/api/v2/dags/{AIRFLOW_DAG_ID}/dagRuns"
 
     dag_config = {
         "conf": {
             "hf_repository": hf_repo,
-            "initiated_by": "m1core-ui-portal"
-        }
+            "initiated_by": "m1core-ui-portal",
+        },
+        "logical_date": None,
     }
 
     try:
-        response = requests.post(trigger_url, json=dag_config, auth=AIRFLOW_AUTH, timeout=10)
-        if response.status_code == 201:
+        token = get_airflow_token()
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=500, detail=f"Airflow auth failed: {str(e)}")
+
+    try:
+        response = requests.post(
+            trigger_url,
+            json=dag_config,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        if response.status_code in (200, 201):
             return {"status": "success", "message": f"Пайплайн для {hf_repo} запущен в Airflow!"}
         else:
             raise HTTPException(status_code=500, detail=f"Airflow Error {response.status_code}: {response.text}")
